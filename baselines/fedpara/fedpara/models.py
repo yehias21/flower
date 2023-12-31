@@ -121,7 +121,22 @@ class FC(nn.Module):
             self.fc2.w2 = state_dict["fc2.w2"]
         else:
             raise ValueError("method must be either pfedpara, fedper")
-
+    @property
+    def model_size(self):
+        """
+        Return the total number of trainable parameters (in million paramaters) and the size of the model in MB.
+        """
+        total_trainable_params = sum(
+        p.numel() for p in self.parameters() if p.requires_grad)/1e6
+        param_size = 0
+        for param in self.parameters():
+            param_size += param.nelement() * param.element_size()
+        buffer_size = 0
+        for buffer in self.buffers():
+            buffer_size += buffer.nelement() * buffer.element_size()
+        size_all_mb = (param_size + buffer_size) / 1024**2
+        return total_trainable_params, size_all_mb
+    
     def forward(self,x):
         out = self.fc1(x)
         out = self.relu(out)
